@@ -13,6 +13,6 @@ Web Application to analyze pinterest feeds
 - in application.yaml file change `PINTEREST_EMAIL` and `PINTEREST_PASSWORD` with your Pinterest credentials
 
 ## Run
-- Execute 'java -jar target/pinterest-feed-analyzer-{version}.jar'
+- Execute `java -jar target/pinterest-feed-analyzer-{version}.jar`
 - The app will be started on port 8080
 - open in browser http://localhost:8080/index.html
