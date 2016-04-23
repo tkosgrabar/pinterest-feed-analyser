@@ -3,7 +3,12 @@ server:
 
 pinterest:
   loginUrl: https://www.pinterest.com/login
-  email: tomislav.kos.grabar@gmail.com
-  password: kos373EV
+  email: PINTEREST_EMAIL
+  password: PINTEREST_PASSWORD
+
+proxy:
+  socksProxy: SOCKS_PROXY
+  proxyUsername: PROXY_USERNAME
+  proxyPassword: PROXY_PASSWORD
 
 spring.resources.static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/

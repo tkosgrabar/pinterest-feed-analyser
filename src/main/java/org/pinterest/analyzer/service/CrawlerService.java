@@ -1,17 +1,14 @@
 package org.pinterest.analyzer.service;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.WebClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.pinterest.analyzer.PinterestProperties;
+import org.pinterest.analyzer.ProxyProperties;
 import org.pinterest.analyzer.controller.AnalysisRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,11 +25,13 @@ import static com.jayway.awaitility.Awaitility.await;
 @Service
 public class CrawlerService {
 
-    private final PinterestProperties properties;
+    private final PinterestProperties pinterestProperties;
+    private final ProxyProperties proxyProperties;
 
     @Autowired
-    public CrawlerService(PinterestProperties properties) {
-        this.properties = properties;
+    public CrawlerService(PinterestProperties pinterestProperties, ProxyProperties proxyProperties) {
+        this.pinterestProperties = pinterestProperties;
+        this.proxyProperties = proxyProperties;
     }
 
     public Map<Pin, Integer> crawl(AnalysisRequest request) {
@@ -48,18 +47,19 @@ public class CrawlerService {
     }
 
     private WebDriver getDriver() {
-        HtmlUnitDriver driver = new HtmlUnitDriver(BrowserVersion.FIREFOX_38) {
-            @Override
-            protected WebClient getWebClient() {
-                WebClient webClient = super.getWebClient();
-                webClient.getOptions().setThrowExceptionOnScriptError(false);
-                webClient.getOptions().setJavaScriptEnabled(true);
-                return webClient;
+        DesiredCapabilities capabilities = new DesiredCapabilities();
+        if (proxyProperties.getSocksProxy() != null) {
+            Proxy proxy = new Proxy();
+            proxy.setSocksProxy(proxyProperties.getSocksProxy());
+            if (proxyProperties.getProxyUsername() != null) {
+                proxy.setSocksUsername(proxyProperties.getProxyUsername());
             }
-        };
-        driver.setJavascriptEnabled(true);
-
-        return new FirefoxDriver();
+            if (proxyProperties.getProxyPassword() != null) {
+                proxy.setSocksPassword(proxyProperties.getProxyPassword());
+            }
+            capabilities.setCapability(CapabilityType.PROXY, proxy);
+        }
+        return new FirefoxDriver(capabilities);
     }
 
     private Map<Pin, Integer> crawlPins(AnalysisRequest request, WebDriver driver) throws IOException {
@@ -77,11 +77,11 @@ public class CrawlerService {
     }
 
     private void login(WebDriver driver) {
-        driver.get(properties.getLoginUrl());
+        driver.get(pinterestProperties.getLoginUrl());
         WebElement emailInput = driver.findElement(By.className("email"));
-        emailInput.sendKeys(properties.getEmail());
+        emailInput.sendKeys(pinterestProperties.getEmail());
         WebElement passwordInput = driver.findElement(By.name("password"));
-        passwordInput.sendKeys(properties.getPassword());
+        passwordInput.sendKeys(pinterestProperties.getPassword());
 
         driver.findElement(By.className("primary")).click();
 
@@ -95,7 +95,7 @@ public class CrawlerService {
 
         int latestHeight = driver.findElement(By.className("GridItems")).getSize().getHeight();
         JavascriptExecutor jse = (JavascriptExecutor) driver;
-        while(pins.size() < count) {
+        while (pins.size() < count) {
             long startedAt = System.currentTimeMillis();
             while (!driver.findElement(By.className("gridFooterSpinner")).getCssValue("display").equals("inline-block")
                     && latestHeight == driver.findElement(By.className("GridItems")).getSize().getHeight()) {
@@ -149,7 +149,7 @@ public class CrawlerService {
     private Map<Pin, Integer> countByPin(Set<PinWrapper> pinWrappers, String filter) {
         Map<Pin, Integer> map = new HashMap<>();
 
-        if(filter != null && !filter.trim().equals("")) {
+        if (filter != null && !filter.trim().equals("")) {
             pinWrappers = pinWrappers.stream().filter(p -> p.getDescription().contains(filter.trim())).collect(Collectors.toSet());
         }
 

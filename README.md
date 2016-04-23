@@ -10,7 +10,9 @@ Web Application to analyze pinterest feeds
 
 ## Setup
 - Execute `mvn clean install`
-- in application.yaml file change `PINTEREST_EMAIL` and `PINTEREST_PASSWORD` with your Pinterest credentials
+- in application.yaml file change
+    * `PINTEREST_EMAIL` and `PINTEREST_PASSWORD` with your Pinterest credentials
+    * `SOCKS_PROXY`, `PROXY_USERNAME`, `PROXY_PASSWORD` with your Socks Proxy credentials
 
 ## Run
 - Execute `java -jar target/pinterest-feed-analyzer-{version}.jar`
