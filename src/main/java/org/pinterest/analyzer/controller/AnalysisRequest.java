@@ -11,5 +11,6 @@ public class AnalysisRequest {
 
     private String url;
     private Integer count;
+    private String filter;
 
 }

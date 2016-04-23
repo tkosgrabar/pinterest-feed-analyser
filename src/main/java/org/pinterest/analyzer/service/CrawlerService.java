@@ -73,7 +73,7 @@ public class CrawlerService {
         }
         Set<PinWrapper> pinWrappers = scrollAndCrawl(driver, request.getCount());
 
-        return countByPin(pinWrappers);
+        return countByPin(pinWrappers, request.getFilter());
     }
 
     private void login(WebDriver driver) {
@@ -146,8 +146,13 @@ public class CrawlerService {
         }
     }
 
-    private Map<Pin, Integer> countByPin(Set<PinWrapper> pinWrappers) {
+    private Map<Pin, Integer> countByPin(Set<PinWrapper> pinWrappers, String filter) {
         Map<Pin, Integer> map = new HashMap<>();
+
+        if(filter != null && !filter.trim().equals("")) {
+            pinWrappers = pinWrappers.stream().filter(p -> p.getDescription().contains(filter.trim())).collect(Collectors.toSet());
+        }
+
         pinWrappers.forEach(wrapper -> {
             Pin pin = new Pin(wrapper.getImgUrl(), wrapper.getPinUrl(), wrapper.getDescription());
             Integer count = map.get(pin);

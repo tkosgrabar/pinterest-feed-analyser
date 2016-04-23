@@ -52,6 +52,7 @@ var Analyzer = React.createClass({
             disabled: false,
             url: '',
             count: '',
+            filter: '',
             analysis: []
         };
     },
@@ -61,18 +62,23 @@ var Analyzer = React.createClass({
     handleCountChanged: function (e) {
         this.setState({count: e.target.value});
     },
+    handleFilterChanged: function (e) {
+        this.setState({filter: e.target.value});
+    },
     handleSubmit: function (e) {
         e.preventDefault();
 
         var url = this.state.url.trim();
         var count = this.state.count;
+        var filter = this.state.filter.trim();
         if (!url || !count) {
             return;
         }
         this.setState({disabled: true});
         var request = {
             url: url,
-            count: count
+            count: count,
+            filter: filter
         };
         $.ajax({
             url: this.props.url,
@@ -84,7 +90,8 @@ var Analyzer = React.createClass({
                         analysis: data.analysis,
                         disabled: false,
                         url: '',
-                        count: ''
+                        count: '',
+                        filter: ''
                     }
                 );
             }.bind(this),
@@ -94,7 +101,8 @@ var Analyzer = React.createClass({
                         analysis: [],
                         disabled: false,
                         url: '',
-                        count: ''
+                        count: '',
+                        filter: ''
                     }
                 );
             }.bind(this)
@@ -106,7 +114,7 @@ var Analyzer = React.createClass({
                 <ReactBootstrap.Row className="show-grid">
                     <ReactBootstrap.Col xs={12} md={8} xsOffset={1}>
                         <ReactBootstrap.Form inline onSubmit={this.handleSubmit}>
-                            <ReactBootstrap.FormGroup controlId="formInlineName">
+                            <ReactBootstrap.FormGroup>
                                 <ReactBootstrap.ControlLabel>Url</ReactBootstrap.ControlLabel>
                                 {' '}
                                 <ReactBootstrap.FormControl type="text" placeholder="Pinterest url to analyze"
@@ -115,13 +123,22 @@ var Analyzer = React.createClass({
                                                             onChange={this.handleUrlChanged}/>
                             </ReactBootstrap.FormGroup>
                             {' '}
-                            <ReactBootstrap.FormGroup controlId="formInlineEmail">
+                            <ReactBootstrap.FormGroup>
                                 <ReactBootstrap.ControlLabel>Count</ReactBootstrap.ControlLabel>
                                 {' '}
                                 <ReactBootstrap.FormControl type="number" placeholder="Pins count"
                                                             value={this.state.count}
                                                             disabled={this.state.disabled}
                                                             onChange={this.handleCountChanged}/>
+                            </ReactBootstrap.FormGroup>
+                            {' '}
+                            <ReactBootstrap.FormGroup>
+                                <ReactBootstrap.ControlLabel>Count</ReactBootstrap.ControlLabel>
+                                {' '}
+                                <ReactBootstrap.FormControl type="text" placeholder="Filter description"
+                                                            value={this.state.filter}
+                                                            disabled={this.state.disabled}
+                                                            onChange={this.handleFilterChanged}/>
                             </ReactBootstrap.FormGroup>
                             {' '}
                             <ReactBootstrap.Button type="submit" disabled={this.state.disabled}>
