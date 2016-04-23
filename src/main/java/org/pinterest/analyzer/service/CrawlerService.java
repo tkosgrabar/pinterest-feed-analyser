@@ -48,13 +48,13 @@ public class CrawlerService {
 
     private WebDriver getDriver() {
         DesiredCapabilities capabilities = new DesiredCapabilities();
-        if (proxyProperties.getSocksProxy() != null) {
+        if (proxyProperties.getSocksProxy() != null && !proxyProperties.getSocksProxy().equals("")) {
             Proxy proxy = new Proxy();
             proxy.setSocksProxy(proxyProperties.getSocksProxy());
-            if (proxyProperties.getProxyUsername() != null) {
+            if (proxyProperties.getProxyUsername() != null && !proxyProperties.getProxyUsername().equals("")) {
                 proxy.setSocksUsername(proxyProperties.getProxyUsername());
             }
-            if (proxyProperties.getProxyPassword() != null) {
+            if (proxyProperties.getProxyPassword() != null && !proxyProperties.getProxyPassword().equals("")) {
                 proxy.setSocksPassword(proxyProperties.getProxyPassword());
             }
             capabilities.setCapability(CapabilityType.PROXY, proxy);
@@ -130,7 +130,6 @@ public class CrawlerService {
                         }
                 );
     }
-
 
     private PinWrapper toPinWrapper(Element itemElement) {
         try {
