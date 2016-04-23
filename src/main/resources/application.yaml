@@ -3,7 +3,7 @@ server:
 
 pinterest:
   loginUrl: https://www.pinterest.com/login
-  email: PINTEREST_EMAIL
-  password: PINTEREST_PASSWORD
+  email: tomislav.kos.grabar@gmail.com
+  password: kos373EV
 
 spring.resources.static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/

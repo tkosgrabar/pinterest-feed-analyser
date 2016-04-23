@@ -32,7 +32,7 @@ var Pin = React.createClass({
                     {this.props.count}
                 </td>
                 <td>
-                    <img src={this.props.pin.imgUrl}/>
+                    <img src={this.props.pin.imgUrl} style={{maxHeight : 500 + 'px', maxWidth: 500 + 'px'}}/>
                 </td>
                 <td>
                     {this.props.pin.description}

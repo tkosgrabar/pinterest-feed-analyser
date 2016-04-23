@@ -18,8 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -64,12 +64,16 @@ public class CrawlerService {
 
     private Map<Pin, Integer> crawlPins(AnalysisRequest request, WebDriver driver) throws IOException {
         login(driver);
+
         driver.get(request.getUrl());
-        scrollEnough(driver, request.getCount());
 
-        List<Pin> pins = parsePins(driver);
+        // wait until page is loaded fully
+        while (!driver.findElement(By.className("gridFooterSpinner")).getCssValue("display").equals("none")) {
 
-        return countByPin(pins);
+        }
+        Set<PinWrapper> pinWrappers = scrollAndCrawl(driver, request.getCount());
+
+        return countByPin(pinWrappers);
     }
 
     private void login(WebDriver driver) {
@@ -86,73 +90,66 @@ public class CrawlerService {
         }
     }
 
-    private void scrollEnough(WebDriver driver, Integer count) throws IOException {
-        JavascriptExecutor jse = (JavascriptExecutor) driver;
-        while (!driver.findElement(By.className("gridFooterSpinner")).getCssValue("display").equals("none")) {
+    private Set<PinWrapper> scrollAndCrawl(WebDriver driver, Integer count) {
+        Set<PinWrapper> pins = parsePins(driver);
 
-        }
         int latestHeight = driver.findElement(By.className("GridItems")).getSize().getHeight();
-        while (getPinsCount(driver) < count) {
-
+        JavascriptExecutor jse = (JavascriptExecutor) driver;
+        while(pins.size() < count) {
             long startedAt = System.currentTimeMillis();
             while (!driver.findElement(By.className("gridFooterSpinner")).getCssValue("display").equals("inline-block")
                     && latestHeight == driver.findElement(By.className("GridItems")).getSize().getHeight()) {
                 if (System.currentTimeMillis() > startedAt + 20 * 1000) {
                     // reahed the end
-                    return;
+                    return pins;
                 }
                 jse.executeScript("window.scrollBy(0, 250)", "");
             }
             waitUntilLoadingDone(driver);
             latestHeight = driver.findElement(By.className("GridItems")).getSize().getHeight();
+            pins.addAll(parsePins(driver));
         }
-    }
-
-    private void waitUntilLoadingStarted(WebDriver driver) {
-        await().atMost(20, TimeUnit.SECONDS)
-                .until(() ->
-                        driver.findElement(By.className("gridFooterSpinner")).getCssValue("display").equals("inline-block")
-                );
-    }
-
-    private void waitUntilLoadingDone(WebDriver driver) {
-        await().atMost(20, TimeUnit.SECONDS)
-                .until(() ->
-                        driver.findElement(By.className("gridFooterSpinner")).getCssValue("display").equals("block")
-                );
-    }
-
-    private int getPinsCount(WebDriver driver) throws IOException {
-        String html = driver.getPageSource();
-        Document doc = Jsoup.parse(html);
-
-        return doc.getElementsByClass("pinWrapper").size();
-    }
-
-    private List<Pin> parsePins(WebDriver driver) throws IOException {
-        String html = driver.getPageSource();
-        Document doc = Jsoup.parse(html);
-
-        List<Pin> pins = doc.getElementsByClass("pinWrapper").stream().map(this::toPin).filter(p -> p != null).collect(Collectors.toList());
 
         return pins;
     }
 
-    private Pin toPin(Element element) {
+    private Set<PinWrapper> parsePins(WebDriver driver) {
+        String html = driver.getPageSource();
+        Document doc = Jsoup.parse(html);
+
+        Set<PinWrapper> pins = doc.getElementsByClass("item").stream().map(this::toPinWrapper).filter(p -> p != null).collect(Collectors.toSet());
+
+        return pins;
+    }
+
+    private void waitUntilLoadingDone(WebDriver driver) {
+        await().atMost(20, TimeUnit.SECONDS)
+                .until(() -> {
+                            String displayClass = driver.findElement(By.className("gridFooterSpinner")).getCssValue("display");
+                            return displayClass.equals("block") || displayClass.equals("none");
+                        }
+                );
+    }
+
+
+    private PinWrapper toPinWrapper(Element itemElement) {
         try {
-            String pinUrl = "https://www.pinterest.com" + element.getElementsByClass("pinImageWrapper").get(0).attr("href");
-            String imgUrl = element.getElementsByClass("pinImg").get(0).attr("src");
-            String description = element.getElementsByClass("pinDescription").get(0).text();
-            Pin pin = new Pin(imgUrl, pinUrl, description);
-            return pin;
+            String top = itemElement.attr("style").split(";")[0].replace("top: ", "");
+            String left = itemElement.attr("style").split(";")[1].replace(" left: ", "");
+            String pinUrl = "https://www.pinterest.com" + itemElement.getElementsByClass("pinImageWrapper").get(0).attr("href");
+            String imgUrl = itemElement.getElementsByClass("pinImg").get(0).attr("src");
+            String description = itemElement.getElementsByClass("pinDescription").get(0).text();
+            PinWrapper pinWrapper = new PinWrapper(imgUrl, pinUrl, description, top, left);
+            return pinWrapper;
         } catch (Exception e) {
             return null;
         }
     }
 
-    private Map<Pin, Integer> countByPin(List<Pin> pins) {
+    private Map<Pin, Integer> countByPin(Set<PinWrapper> pinWrappers) {
         Map<Pin, Integer> map = new HashMap<>();
-        pins.forEach(pin -> {
+        pinWrappers.forEach(wrapper -> {
+            Pin pin = new Pin(wrapper.getImgUrl(), wrapper.getPinUrl(), wrapper.getDescription());
             Integer count = map.get(pin);
             if (count == null) {
                 map.put(pin, 1);
