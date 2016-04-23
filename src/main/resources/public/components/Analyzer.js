@@ -133,7 +133,7 @@ var Analyzer = React.createClass({
                             </ReactBootstrap.FormGroup>
                             {' '}
                             <ReactBootstrap.FormGroup>
-                                <ReactBootstrap.ControlLabel>Count</ReactBootstrap.ControlLabel>
+                                <ReactBootstrap.ControlLabel>Filter</ReactBootstrap.ControlLabel>
                                 {' '}
                                 <ReactBootstrap.FormControl type="text" placeholder="Filter description"
                                                             value={this.state.filter}
